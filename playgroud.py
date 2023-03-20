@@ -1,13 +1,25 @@
-from pedalboard import load_plugin
-from pedalboard.io import AudioFile
+from pedalboard import load_plugin, Pedalboard, Reverb
+from pedalboard.io import AudioFile, AudioStream
 import numpy as np
+import simpleaudio
 import librosa
 
 plugin = load_plugin("/Library/Audio/Plug-Ins/Components/TAL-NoiseMaker.component")
 
-tone = librosa.tone(440, sr=44100, duration=5)
+pedalboard = Pedalboard([
+    plugin,
+    Reverb(room_size=0.25),
+])
 
-output = plugin.process(np.array( [tone, tone] ), 44100)
+while True:
+  key = input("a, b, or c?")
+  if key == "a":
+     break
+  elif key == "b":
+    tone = librosa.tone(440, sr=44100, duration=0.1)
+  elif key == "c":
+    tone = librosa.tone(450, sr=44100, duration=0.1)
 
-with AudioFile('processed-output.wav', 'w', 44100, output.shape[0]) as f:
-  f.write(output)
+  output = pedalboard.process(np.array( [tone, tone] ), 44100)
+  buf = simpleaudio.play_buffer(output, 2, 4, 44100)
+  buf.wait_done()
